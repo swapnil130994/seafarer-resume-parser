@@ -15,24 +15,16 @@ def normalize_cell_text(value):
 def extract_docx(path):
     doc = Document(path)
     parts = []
-
     for paragraph in doc.paragraphs:
-        # Preserve explicit line breaks inside Word paragraphs. Some CVs put
-        # the role/name/contact fields into one paragraph with visual breaks.
-        raw_lines = paragraph.text.splitlines() or [paragraph.text]
-        for raw_line in raw_lines:
+        for raw_line in paragraph.text.splitlines() or [paragraph.text]:
             value = normalize_cell_text(raw_line)
             if value:
                 parts.append(value)
-
     for table in doc.tables:
         for row in table.rows:
             cells = [normalize_cell_text(cell.text) for cell in row.cells]
             if any(cells):
-                # Keep table columns separated. The parser uses this structure
-                # for employment, documents and course tables.
                 parts.append(" | ".join(cells))
-
     return "\n".join(parts)
 
 
@@ -48,11 +40,8 @@ def extract_pdf(path):
                 text = page.extract_text(x_tolerance=2, y_tolerance=3) or ""
                 if text.strip():
                     parts.append(text)
-
-                # Preserve PDF tables where pdfplumber can detect them.
                 try:
-                    tables = page.extract_tables() or []
-                    for table in tables:
+                    for table in page.extract_tables() or []:
                         for row in table:
                             cells = [normalize_cell_text(cell) for cell in (row or [])]
                             if any(cells):
@@ -61,7 +50,6 @@ def extract_pdf(path):
                     pass
     except Exception:
         pass
-
     text = "\n".join(parts).strip()
     if len(text) < 150:
         output = []
@@ -74,18 +62,12 @@ def extract_pdf(path):
         finally:
             doc.close()
         return "\n".join(output).strip(), True
-
     return text, False
 
 
 def extract_text(path):
     extension = os.path.splitext(path)[1].lower()
-    if extension == ".pdf":
-        return extract_pdf(path)
-    if extension == ".docx":
-        return extract_docx(path), False
-    if extension in {".jpg", ".jpeg", ".png", ".webp"}:
-        return ocr_image(Image.open(path)), True
-    if extension == ".doc":
-        raise ValueError("Old .doc files are not supported directly. Convert .doc to .docx or PDF.")
-    raise ValueError("Unsupported file type.")
+    if extension == ".pdf": return extract_pdf(path)
+    if extension == ".docx": return extract_docx(path), False
+    if extension in {".jpg", ".jpeg", ".png", ".webp"}: return ocr_image(Image.open(path)), True
+    raise ValueError("Unsupported file type. Use PDF, DOCX, JPG, JPEG, PNG or WEBP.")
