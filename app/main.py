@@ -3,10 +3,10 @@ import os,tempfile
 from fastapi import FastAPI,UploadFile,File,HTTPException
 from .extractor import extract_text
 from .seafarer_parser import parse_resume
-app=FastAPI(title="Seafarer Crew Resume Parser",version="1.0.0")
+app=FastAPI(title="Seafarer Crew Resume Parser",version="1.1.0")
 ALLOWED={".pdf",".docx",".jpg",".jpeg",".png",".webp"}; MAX_FILE_SIZE=15*1024*1024
 @app.get("/")
-def root():return {"status":"ok","service":"Seafarer Crew Resume Parser","version":"1.0.0"}
+def root():return {"status":"ok","service":"Seafarer Crew Resume Parser","version":"1.1.0"}
 @app.get("/health")
 def health():return {"status":"healthy"}
 @app.post("/parse")
